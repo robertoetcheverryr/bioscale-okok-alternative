@@ -127,9 +127,13 @@ class BleService {
       // Begin scanning
       // androidUsesFineLocation: scales like BP106A alternate with iBeacon
       // adverts, which Android filters out of scans made without location.
+      // continuousUpdates: without it Android reports only the first advert
+      // per device. BP106A alternates a nameless iBeacon frame with its named
+      // frame, so if the iBeacon one arrives first the scale never matches.
       await FlutterBluePlus.startScan(
         timeout: scanTimeout,
         androidUsesFineLocation: true,
+        continuousUpdates: true,
       );
     } catch (e) {
       _emit(BleState(
@@ -163,6 +167,12 @@ class BleService {
   // ── Scan handling ──────────────────────────────────────────────────────
 
   void _onScanResults(List<ScanResult> results) {
+    // With continuousUpdates the same scale is reported repeatedly; only
+    // act while still scanning so we don't start several connections.
+    if (_currentState.status != BleStatus.scanning &&
+        _currentState.status != BleStatus.measuring) {
+      return;
+    }
     for (final result in results) {
       // 1) Try manufacturer data broadcast decoding (OKOK)
       final mfData = result.advertisementData.manufacturerData;
