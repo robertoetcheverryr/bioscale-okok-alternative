@@ -251,7 +251,31 @@ class BleService {
         }
       });
 
-      await device.connect(timeout: const Duration(seconds: 10));
+      // Cheap Chipsea scales drop the link when an MTU request arrives right
+      // after connecting ("requestMtu: device is disconnected"), and Android
+      // often fails the first attempt with GATT status 133. Don't request an
+      // MTU (the default 23 bytes fits every Chipsea packet), give the radio
+      // a moment after stopping the scan, and retry a few times.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      Object? lastError;
+      for (var attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await device.connect(
+            timeout: const Duration(seconds: 15),
+            mtu: null,
+          );
+          lastError = null;
+          break;
+        } catch (e) {
+          lastError = e;
+          debugPrint('BleService connect attempt $attempt failed: $e');
+          try {
+            await device.disconnect();
+          } catch (_) {}
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      }
+      if (lastError != null) throw lastError;
       await _discoverAndSubscribe(device);
     } catch (e) {
       debugPrint('BleService connect error: $e');
