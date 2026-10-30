@@ -496,6 +496,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ),
+        // TEMPORARY: entry point to the BLE debug screen.
+        TextButton(
+          onPressed: () => context.push('/ble-debug'),
+          child: const Text('BLE debug'),
+        ),
         if (!isDisabled && !isComplete)
           Padding(
             padding: const EdgeInsets.only(top: 6),

@@ -7,6 +7,7 @@ import 'screens/history_screen.dart';
 import 'screens/comparison_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/ble_debug_screen.dart'; // TEMPORARY
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -34,6 +35,7 @@ final _router = GoRouter(
     ),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+    GoRoute(path: '/ble-debug', builder: (_, __) => const BleDebugScreen()), // TEMPORARY
   ],
 );
 
