@@ -68,6 +68,7 @@ class BleService {
   Stream<BleState> get stateStream => _stateController.stream;
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
+  StreamSubscription<bool>? _isScanningSubscription;
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
   List<StreamSubscription<List<int>>>? _charSubscriptions;
 
@@ -75,6 +76,8 @@ class BleService {
   BleState _currentState = const BleState();
 
   // ── Public API ─────────────────────────────────────────────────────────
+
+  static const scanTimeout = Duration(seconds: 30);
 
   /// Start scanning for compatible Chipsea / OKOK scales.
   Future<void> startScan() async {
@@ -107,9 +110,23 @@ class BleService {
         },
       );
 
+      // When the scan stops on its own (timeout) and nothing was found,
+      // leave the "step on the scale" state instead of hanging forever.
+      _isScanningSubscription?.cancel();
+      _isScanningSubscription = FlutterBluePlus.isScanning.skip(1).listen((scanning) {
+        if (!scanning && _currentState.status == BleStatus.scanning) {
+          _scanSubscription?.cancel();
+          _scanSubscription = null;
+          _emit(const BleState(
+            status: BleStatus.error,
+            errorMessage: 'No scale found. Tap to try again.',
+          ));
+        }
+      });
+
       // Begin scanning
       await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 30),
+        timeout: scanTimeout,
       );
     } catch (e) {
       _emit(BleState(
@@ -121,6 +138,8 @@ class BleService {
 
   /// Stop scanning and disconnect any connected device.
   Future<void> stopScan() async {
+    _isScanningSubscription?.cancel();
+    _isScanningSubscription = null;
     await FlutterBluePlus.stopScan();
     _scanSubscription?.cancel();
     _scanSubscription = null;
@@ -130,6 +149,7 @@ class BleService {
 
   /// Release all resources.
   void dispose() {
+    _isScanningSubscription?.cancel();
     _scanSubscription?.cancel();
     _connectionSubscription?.cancel();
     _cancelCharSubscriptions();
@@ -198,7 +218,9 @@ class BleService {
   Future<void> _onDeviceFound(BluetoothDevice device, String name) async {
     _emit(BleState(status: BleStatus.found, deviceName: name));
 
-    // Stop scanning before connecting
+    // Stop scanning before connecting (not a timeout, so drop the watcher)
+    _isScanningSubscription?.cancel();
+    _isScanningSubscription = null;
     await FlutterBluePlus.stopScan();
     _scanSubscription?.cancel();
     _scanSubscription = null;
