@@ -154,10 +154,19 @@ class BleService {
         }
       }
 
-      // 2) Check device name for GATT connection
-      final name = result.advertisementData.advName;
-      if (name.isNotEmpty && _matchesPrefix(name)) {
-        _onDeviceFound(result.device, name);
+      // 2) GATT path: name prefix OR Chipsea service UUID (fff0 / ffb0).
+      // Prefer advName, fall back to platformName (Android often has only that).
+      final name = result.advertisementData.advName.isNotEmpty
+          ? result.advertisementData.advName
+          : result.device.platformName;
+      final uuids = result.advertisementData.serviceUuids;
+      final hasChipseaUuid = uuids.any((u) =>
+          u == BleConstants.chipseaServiceUuid ||
+          u == BleConstants.chipseaV2ServiceUuid);
+
+      if ((name.isNotEmpty && _matchesPrefix(name)) || hasChipseaUuid) {
+        final label = name.isNotEmpty ? name : result.device.remoteId.str;
+        _onDeviceFound(result.device, label);
         return;
       }
     }
@@ -165,8 +174,9 @@ class BleService {
 
   bool _matchesPrefix(String name) {
     final lower = name.toLowerCase();
-    return BleConstants.chipseaDeviceNamePrefixes
-        .any((prefix) => lower.startsWith(prefix.toLowerCase()));
+    return BleConstants.chipseaDeviceNamePrefixes.any(
+      (prefix) => lower.contains(prefix.toLowerCase()),
+    );
   }
 
   void _handleBroadcast(BroadcastResult broadcast, BluetoothDevice device) {

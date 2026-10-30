@@ -36,6 +36,7 @@ class BleConstants {
     'QN-Scale',
     'CS Scale',
     'Health Scale',
+    'BP106A',
   ];
 
   // ── Commands ───────────────────────────────────────────────────────────

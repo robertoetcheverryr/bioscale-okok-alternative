@@ -15,7 +15,7 @@ CHIPSEA_V2_WEIGHT_CHAR_UUID = "0000ffb2-0000-1000-8000-00805f9b34fb"  # Notify �
 CHIPSEA_V2_BIA_CHAR_UUID = "0000ffb3-0000-1000-8000-00805f9b34fb"    # Indicate — dados BIA
 
 # Nome BLE que identifica a balança (pode haver variações)
-CHIPSEA_DEVICE_NAME_PREFIXES = ["Chipsea-BLE", "OKOK", "QN-Scale", "CS Scale", "Health Scale"]
+CHIPSEA_DEVICE_NAME_PREFIXES = ["Chipsea-BLE", "OKOK", "QN-Scale", "CS Scale", "Health Scale", "BP106A"]
 
 # Comandos de escrita (Conjunto 1)
 CMD_GET_HISTORY = bytes([0xF2, 0x00])       # Solicitar histórico de medições
