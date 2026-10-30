@@ -177,7 +177,11 @@ class BleService {
         final companyId = entry.key;
         final bytes = Uint8List.fromList(entry.value);
         final broadcast =
-            BleBroadcastDecoder.decodeOkokBroadcast(companyId, bytes);
+            BleBroadcastDecoder.decodeOkokBroadcast(
+          companyId,
+          bytes,
+          deviceAddress: result.device.remoteId.str,
+        );
         if (broadcast != null) {
           _handleBroadcast(broadcast, result.device);
           return;
