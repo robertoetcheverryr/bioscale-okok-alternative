@@ -125,8 +125,12 @@ class BleService {
       });
 
       // Begin scanning
+      // continuousUpdates: broadcast scales send the live weight in every
+      // advertisement. Without it Android reports only the first advert per
+      // device, so the reading would never update after stepping on.
       await FlutterBluePlus.startScan(
         timeout: scanTimeout,
+        continuousUpdates: true,
       );
     } catch (e) {
       _emit(BleState(
@@ -160,6 +164,12 @@ class BleService {
   // ── Scan handling ──────────────────────────────────────────────────────
 
   void _onScanResults(List<ScanResult> results) {
+    // With continuousUpdates the same device is reported repeatedly; ignore
+    // results once a measurement completed or a connection is underway.
+    if (_currentState.status != BleStatus.scanning &&
+        _currentState.status != BleStatus.measuring) {
+      return;
+    }
     for (final result in results) {
       // 1) Try manufacturer data broadcast decoding (OKOK)
       final mfData = result.advertisementData.manufacturerData;
