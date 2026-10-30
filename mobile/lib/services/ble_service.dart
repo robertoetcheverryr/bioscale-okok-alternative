@@ -125,8 +125,11 @@ class BleService {
       });
 
       // Begin scanning
+      // androidUsesFineLocation: scales like BP106A alternate with iBeacon
+      // adverts, which Android filters out of scans made without location.
       await FlutterBluePlus.startScan(
         timeout: scanTimeout,
+        androidUsesFineLocation: true,
       );
     } catch (e) {
       _emit(BleState(
